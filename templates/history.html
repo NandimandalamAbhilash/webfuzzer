@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>WebFuzzer — Scan History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom Configuration for Colors and Fonts (Matching index.html) */
+    :root {
+      /* Primary Brand Color: Teal */
+      --color-primary: #0d9488;
+      /* Status Colors */
+      --status-safe: #10b981;
+      --status-not-safe: #ef4444;
+      --status-warning: #f59e0b;
+    }
+    
+    body {
+      font-family: "Inter", sans-serif;
+      background: #f3f4f6; /* bg-light equivalent */
+    }
+    
+    .card-design {
+      border-radius: 1rem;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* Verdict badges (Matching index.html) */
+    .verdict-safe { background: #d1fae5; color: #065f46; } /* Green */
+    .verdict-not { background: #fee2e2; color: #991b1b; } /* Red */
+    .verdict-pending { background: #e0f2f1; color: #14532d; } /* Light Teal/Green */
+
+    /* Monospace for Target */
+    .monospace {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+      word-break: break-all;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- Header -->
+    <header class="mb-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-md">
+        <h1 class="text-3xl font-extrabold text-gray-900 flex items-center">
+            <i data-lucide="history" class="w-8 h-8 mr-2 text-teal-600"></i> Scan History
+        </h1>
+        <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2"></i> Back to Dashboard
+        </a>
+    </header>
+
+    <!-- Scan History Table -->
+    <div class="bg-white p-6 card-design overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ID</th>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Target</th>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Modes</th>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Progress</th>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Verdict</th>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Started</th>
+            <th class="px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Finished</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+          {% for s in scans %}
+          
+            {# Jinja logic for dynamic classes #}
+            {% set verdict_class = 'verdict-pending' %}
+            {% if s.verdict == 'SAFE' %}
+              {% set verdict_class = 'verdict-safe' %}
+            {% elif s.verdict == 'NOT SAFE' %}
+              {% set verdict_class = 'verdict-not' %}
+            {% endif %}
+
+            {% set progress_value = s.progress or 0 %}
+            {% set progress_class = 'bg-gray-400' %}
+            {% if s.status == 'running' %}
+                {% set progress_class = 'bg-teal-500' %}
+            {% elif s.status == 'finished' and s.verdict == 'SAFE' %}
+                {% set progress_class = 'bg-[#10b981]' %}
+            {% elif s.status == 'finished' and s.verdict == 'NOT SAFE' %}
+                {% set progress_class = 'bg-[#ef4444]' %}
+            {% elif s.status == 'cancelled' %}
+                {% set progress_class = 'bg-[#f59e0b]' %}
+            {% endif %}
+
+          <tr class="hover:bg-gray-50 transition duration-100">
+            <td class="px-3 py-3 text-sm font-bold text-gray-900">{{ s.id }}</td>
+            <td class="px-3 py-3 text-sm text-gray-700 monospace">{{ s.target }}</td>
+            <td class="px-3 py-3 text-sm text-gray-700">{{ ', '.join(s.modes or []) }}</td>
+            <td class="px-3 py-3 text-sm text-gray-700 capitalize">{{ s.status }}</td>
+            
+            <td class="px-3 py-3 text-sm text-gray-500 w-1/12">
+                <div class="h-2 w-full bg-gray-200 rounded-full">
+                    <div class="h-2 rounded-full {{ progress_class }}" style="width: {{ progress_value }}%"></div>
+                </div>
+                <span class="text-xs text-gray-600 mt-1 block">{{ progress_value }}%</span>
+            </td>
+
+            <td class="px-3 py-3 text-sm">
+                <span class="inline-block px-3 py-1 text-xs font-bold rounded-full {{ verdict_class }}">{{ s.verdict }}</span>
+            </td>
+            
+            <td class="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{{ s.started_at }}</td>
+            <td class="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{{ s.finished_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+  <script>
+    // Initialize Lucide Icons after content loads
+    lucide.createIcons();
+  </script>
+</body>
+</html>
