@@ -1,9 +1,7 @@
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.3
 requests==2.31.0
-psycopg2-binary==2.9.6
+psycopg2-binary>=2.9.9
 python-dotenv==1.0.0
 dnspython==2.4.2
-dotenv
-gunicorn
-
+gunicorn>=21.2.0
